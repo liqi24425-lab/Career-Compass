@@ -4,8 +4,8 @@ import { DollarSign, TrendingUp, ArrowLeft, X, Edit2, Map as MapIcon, BarChart2,
 import {GRANULAR_LOOKUP} from "./all_data.js"
 
 // --- CONFIGURATION ---
-// ⚠️ PASTE YOUR API KEY HERE TO ENABLE GOOGLE MAPS.
-// IF EMPTY, THE APP WILL USE THE STATIC MAP (RECOMMENDED FOR TESTING).
+// ⚠️ Set to empty string "" to force the Static Map (Original colorful look).
+// Paste your key back if you want the interactive Google Map.
 const GOOGLE_MAPS_API_KEY = "AIzaSyAqw54yCjz_N5g2_Gcu6WhhWG0V4umsrOE";
 
 // --- 1. DATASETS ---
@@ -84,7 +84,7 @@ const BENCHMARK_LOOKUP = {"Canada": {
     "USA": {"Age_Bin": {"18-24": [9500, 87.6], "25-35": [40000, 96.3], "35-45": [50000, 95.6], "45-55": [55000, 96.2], "55+": [29580, 95.7]}, "Edu_Bin": {"College": [40000, 96.3], "Graduate or Above": [84030, 97.4], "High School": [20000, 92.9], "University": [60000, 96.8]}, "Job_Bin": {"Arts & Design": [50000, 94.7], "Business & Office": [80000, 97.5], "Other": [22400, 92.8], "STEM & Technical": [92000, 98.5], "Social Service": [58000, 97.6]}}};
 
 // D. GRANULAR LOOKUP
-console.log(GRANULAR_LOOKUP)
+console.log(GRANULAR_LOOKUP);
 
 // --- HELPER FUNCTIONS ---
 const formatCurrency = (val) => `$${Math.round(val).toLocaleString()}`;
@@ -104,6 +104,7 @@ const calculateMetrics = (profile) => {
 
         if (!isFallback) {
             // 1. Try Specific Lookup
+            // FIX: Ensure key does NOT include gender so "Female" selection doesn't break lookup
             const key = `${city.city}|${profile.age}|${profile.edu}|${profile.job}`;
             const specificData = GRANULAR_LOOKUP[key];
 
@@ -157,15 +158,18 @@ const calculateMetrics = (profile) => {
 };
 
 // --- MAP LEGEND COMPONENT ---
+// UPDATED: Now supports 5 levels of granularity
 const MapLegend = ({ mapColor }) => {
     if (mapColor === 'income') {
         return (
             <div className="absolute bottom-6 left-6 bg-white/95 backdrop-blur p-4 rounded-xl border border-slate-200 shadow-md text-xs z-[9999] pointer-events-none min-w-[140px]">
                 <div className="font-bold mb-3 text-slate-700 uppercase tracking-wider border-b border-slate-100 pb-2">Income Level</div>
                 <div className="space-y-2 font-medium text-slate-600">
-                    <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#22c55e] mr-2 shadow-sm"></span> High ({'>'}$90k)</div>
+                    <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#15803d] mr-2 shadow-sm"></span> Very High ({'>'}$120k)</div>
+                    <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#22c55e] mr-2 shadow-sm"></span> High ($90k-$120k)</div>
                     <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#eab308] mr-2 shadow-sm"></span> Medium ($60k-$90k)</div>
-                    <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#ef4444] mr-2 shadow-sm"></span> Low ({'<'}$60k)</div>
+                    <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#f97316] mr-2 shadow-sm"></span> Low ($40k-$60k)</div>
+                    <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#ef4444] mr-2 shadow-sm"></span> Very Low ({'<'}$40k)</div>
                 </div>
             </div>
         );
@@ -175,9 +179,11 @@ const MapLegend = ({ mapColor }) => {
             <div className="absolute bottom-6 left-6 bg-white/95 backdrop-blur p-4 rounded-xl border border-slate-200 shadow-md text-xs z-[9999] pointer-events-none min-w-[140px]">
                 <div className="font-bold mb-3 text-slate-700 uppercase tracking-wider border-b border-slate-100 pb-2">Employment Rate</div>
                 <div className="space-y-2 font-medium text-slate-600">
-                    <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#22c55e] mr-2 shadow-sm"></span> High ({'>'}85%)</div>
-                    <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#eab308] mr-2 shadow-sm"></span> Medium (70-85%)</div>
-                    <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#ef4444] mr-2 shadow-sm"></span> Low ({'<'}70%)</div>
+                    <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#15803d] mr-2 shadow-sm"></span> Very High ({'>'}90%)</div>
+                    <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#22c55e] mr-2 shadow-sm"></span> High (80-90%)</div>
+                    <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#eab308] mr-2 shadow-sm"></span> Medium (70-80%)</div>
+                    <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#f97316] mr-2 shadow-sm"></span> Low (60-70%)</div>
+                    <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#ef4444] mr-2 shadow-sm"></span> Very Low ({'<'}60%)</div>
                 </div>
             </div>
         );
@@ -187,9 +193,11 @@ const MapLegend = ({ mapColor }) => {
             <div className="absolute bottom-6 left-6 bg-white/95 backdrop-blur p-4 rounded-xl border border-slate-200 shadow-md text-xs z-[9999] pointer-events-none min-w-[140px]">
                 <div className="font-bold mb-3 text-slate-700 uppercase tracking-wider border-b border-slate-100 pb-2">Affordability</div>
                 <div className="space-y-2 font-medium text-slate-600">
-                    <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#3b82f6] mr-2 shadow-sm"></span> Great ({'>'}4.0)</div>
-                    <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#8b5cf6] mr-2 shadow-sm"></span> Good (2.5-4.0)</div>
-                    <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#ec4899] mr-2 shadow-sm"></span> Poor ({'<'}2.5)</div>
+                    <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#1e40af] mr-2 shadow-sm"></span> Excellent ({'>'}5.0)</div>
+                    <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#3b82f6] mr-2 shadow-sm"></span> Good (4.0-5.0)</div>
+                    <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#a855f7] mr-2 shadow-sm"></span> Fair (3.0-4.0)</div>
+                    <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#ec4899] mr-2 shadow-sm"></span> Poor (2.0-3.0)</div>
+                    <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#be123c] mr-2 shadow-sm"></span> Very Poor ({'<'}2.0)</div>
                 </div>
             </div>
         );
@@ -201,21 +209,28 @@ const MapLegend = ({ mapColor }) => {
 const StaticMap = ({ markers = [], onMarkerClick, mapColor }) => {
     const [imageLoaded, setImageLoaded] = useState(false);
 
+    // UPDATED: 5-level color scale
     const getMarkerColor = (city, type) => {
         if (type === 'income') {
-            if (city.projectedIncome > 90000) return '#22c55e';
-            if (city.projectedIncome > 60000) return '#eab308';
-            return '#ef4444';
+            if (city.projectedIncome > 120000) return '#15803d'; // Deep Green
+            if (city.projectedIncome > 90000) return '#22c55e';  // Green
+            if (city.projectedIncome > 60000) return '#eab308';  // Yellow
+            if (city.projectedIncome > 40000) return '#f97316';  // Orange
+            return '#ef4444';                                    // Red
         }
         if (type === 'emp') {
-            if (city.emp > 85) return '#22c55e';
+            if (city.emp > 90) return '#15803d';
+            if (city.emp > 80) return '#22c55e';
             if (city.emp > 70) return '#eab308';
+            if (city.emp > 60) return '#f97316';
             return '#ef4444';
         }
         if (type === 'afford') {
-            if (city.affordIndex > 4.0) return '#3b82f6';
-            if (city.affordIndex > 2.5) return '#8b5cf6';
-            return '#ec4899';
+            if (city.affordIndex > 5.0) return '#1e40af'; // Deep Blue
+            if (city.affordIndex > 4.0) return '#3b82f6'; // Blue
+            if (city.affordIndex > 3.0) return '#a855f7'; // Purple
+            if (city.affordIndex > 2.0) return '#ec4899'; // Pink
+            return '#be123c';                             // Deep Red
         }
         return '#333';
     };
@@ -280,39 +295,43 @@ const GoogleMapComponent = ({ markers = [], onMarkerClick, mapColor }) => {
     const markersRef = useRef([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [isMapReady, setIsMapReady] = useState(false); // Track if map is fully loaded
+    const [isMapReady, setIsMapReady] = useState(false);
 
+    // UPDATED: 5-level color scale
     const getMarkerColor = useCallback((city, type) => {
         if (type === 'income') {
+            if (city.projectedIncome > 120000) return '#15803d';
             if (city.projectedIncome > 90000) return '#22c55e';
             if (city.projectedIncome > 60000) return '#eab308';
+            if (city.projectedIncome > 40000) return '#f97316';
             return '#ef4444';
         }
         if (type === 'emp') {
-            if (city.emp > 85) return '#22c55e';
+            if (city.emp > 90) return '#15803d';
+            if (city.emp > 80) return '#22c55e';
             if (city.emp > 70) return '#eab308';
+            if (city.emp > 60) return '#f97316';
             return '#ef4444';
         }
         if (type === 'afford') {
+            if (city.affordIndex > 5.0) return '#1e40af';
             if (city.affordIndex > 4.0) return '#3b82f6';
-            if (city.affordIndex > 2.5) return '#8b5cf6';
-            return '#ec4899';
+            if (city.affordIndex > 3.0) return '#a855f7';
+            if (city.affordIndex > 2.0) return '#ec4899';
+            return '#be123c';
         }
         return '#333';
     }, []);
 
-    // 1. Define updateMarkers with useCallback so it's a stable dependency
     const updateMarkers = useCallback(() => {
         if (!window.google?.maps || !googleMapRef.current) return;
 
-        // Clear existing markers
         markersRef.current.forEach(m => m.setMap(null));
         markersRef.current = [];
 
         markers.forEach(city => {
             const color = getMarkerColor(city, mapColor);
 
-            // Create marker
             const marker = new window.google.maps.Marker({
                 position: { lat: city.lat, lng: city.lng },
                 map: googleMapRef.current,
@@ -327,7 +346,6 @@ const GoogleMapComponent = ({ markers = [], onMarkerClick, mapColor }) => {
                 }
             });
 
-            // Add click listener
             marker.addListener("click", () => {
                 onMarkerClick(city);
             });
@@ -336,7 +354,6 @@ const GoogleMapComponent = ({ markers = [], onMarkerClick, mapColor }) => {
         });
     }, [markers, mapColor, getMarkerColor, onMarkerClick]);
 
-    // 2. Initialization Effect - Runs ONCE
     useEffect(() => {
         const initMap = () => {
             if (!mapRef.current || !window.google || !window.google.maps) return;
@@ -354,10 +371,9 @@ const GoogleMapComponent = ({ markers = [], onMarkerClick, mapColor }) => {
                         backgroundColor: '#e0e7eb'
                     });
 
-                    // Add idle listener to remove loading spinner once tiles are ready
                     window.google.maps.event.addListenerOnce(googleMapRef.current, 'idle', () => {
                         setLoading(false);
-                        setIsMapReady(true); // Signal that map is ready for markers
+                        setIsMapReady(true);
                     });
                 }
             } catch (err) {
@@ -397,11 +413,9 @@ const GoogleMapComponent = ({ markers = [], onMarkerClick, mapColor }) => {
                 }, 8000);
             }
         }
-        // We explicitly do NOT include dependencies here to ensure this runs exactly once on mount
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // 3. Update Effect - Runs when data changes or map becomes ready
     useEffect(() => {
         if (isMapReady) {
             updateMarkers();
