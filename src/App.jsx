@@ -17,6 +17,7 @@ import { DollarSign, TrendingUp, ArrowLeft, X, Edit2, Map as MapIcon, BarChart2,
 import {GRANULAR_LOOKUP} from "./all_data.js"
 
 // --- CONFIGURATION ---
+// ⚠️ FIX: Set to empty string "" to force the Static Map and fix the error.
 const GOOGLE_MAPS_API_KEY = "AIzaSyAqw54yCjz_N5g2_Gcu6WhhWG0V4umsrOE";
 
 // --- 1. DATASETS ---
@@ -68,11 +69,9 @@ const NAT_AVGS = {"Canada": {"inc": 43328.26, "rate": 80.76}, "USA": {"inc": 723
 const BENCHMARK_LOOKUP = {"Canada": {"Age_Bin": {"18-24": [20000, 78.9], "25-35": [44000, 90.2], "35-45": [57000, 92.2], "45-55": [58000, 92.5], "55+": [40000, 89.5]}, "Edu_Bin": {"College": [46000, 90.4], "Graduate or Above": [69000, 94.2], "High School": [30000, 84.4], "University": [56000, 92.5]}, "Job_Bin": {"Arts & Design": [52000, 94.1], "Business & Office": [130000, 98.3], "Other": [37000, 87.3], "STEM & Technical": [80000, 95.5], "Social Service": [67000, 95.8]}}, "USA": {"Age_Bin": {"18-24": [9500, 87.6], "25-35": [40000, 96.3], "35-45": [50000, 95.6], "45-55": [55000, 96.2], "55+": [29580, 95.7]}, "Edu_Bin": {"College": [40000, 96.3], "Graduate or Above": [84030, 97.4], "High School": [20000, 92.9], "University": [60000, 96.8]}, "Job_Bin": {"Arts & Design": [50000, 94.7], "Business & Office": [80000, 97.5], "Other": [22400, 92.8], "STEM & Technical": [92000, 98.5], "Social Service": [58000, 97.6]}}};
 
 // D. GRANULAR LOOKUP
-// Empty placeholder to prevent errors
 console.log(GRANULAR_LOOKUP);
 
 // --- HELPER FUNCTIONS ---
-// REVERTED: Use full numbers (e.g. $10,000) for general display as requested
 const formatCurrency = (val) => `$${Math.round(val).toLocaleString()}`;
 
 const calculateMetrics = (profile) => {
