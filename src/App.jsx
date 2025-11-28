@@ -18,7 +18,7 @@ import {GRANULAR_LOOKUP} from "./all_data.js"
 
 // --- CONFIGURATION ---
 // ⚠️ FIX: Set to empty string "" to force the Static Map and fix the error.
-const GOOGLE_MAPS_API_KEY = "AIzaSyAqw54yCjz_N5g2_Gcu6WhhWG0V4umsrOE";
+const GOOGLE_MAPS_API_KEY = "AIzaSyDdRRxGaYCbIalIttbEAbIIYIc7DoMOob0";
 
 // --- 1. DATASETS ---
 const CITY_DATA = [
