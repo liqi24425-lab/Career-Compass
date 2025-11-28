@@ -17,7 +17,7 @@ import { DollarSign, TrendingUp, ArrowLeft, X, Edit2, Map as MapIcon, BarChart2,
 import {GRANULAR_LOOKUP} from "./all_data.js"
 
 // --- CONFIGURATION ---
-const GOOGLE_MAPS_API_KEY = "2021 Census of Population [Canada] / American Community Survey (PUMS)";
+const GOOGLE_MAPS_API_KEY = "AIzaSyAqw54yCjz_N5g2_Gcu6WhhWG0V4umsrOE";
 
 // --- 1. DATASETS ---
 const CITY_DATA = [
