@@ -15,12 +15,10 @@ import {
 } from 'recharts';
 import { DollarSign, TrendingUp, ArrowLeft, X, Edit2, Map as MapIcon, BarChart2, Home, Save, AlertTriangle, Loader2, Info, Clock, Bus } from 'lucide-react';
 import {GRANULAR_LOOKUP} from "./all_data.js"
-
 // --- CONFIGURATION ---
 const GOOGLE_MAPS_API_KEY = "AIzaSyAqw54yCjz_N5g2_Gcu6WhhWG0V4umsrOE";
 
 // --- 1. DATASETS ---
-// Changed workHours to a single average number for clarity
 const CITY_DATA = [
     {"city": "Toronto", "country": "Canada", "lat": 43.6532, "lng": -79.3832, "pop": 6202225, "rent": 1800, "temp": 9.4, "sun": 305, "rain": 110, "snow": 40, "commute": 34, "weather": "Snowy", "baseIncome": 85000, "baseEmp": 61.5, "transitScore": 85, "workHours": 37.5},
     {"city": "Vancouver", "country": "Canada", "lat": 49.2827, "lng": -123.1207, "pop": 2642825, "rent": 2100, "temp": 10.4, "sun": 289, "rain": 168, "snow": 9, "commute": 30, "weather": "Rainy", "baseIncome": 82000, "baseEmp": 62.0, "transitScore": 80, "workHours": 38},
@@ -70,7 +68,7 @@ const BENCHMARK_LOOKUP = {"Canada": {"Age_Bin": {"18-24": [20000, 78.9], "25-35"
 
 // D. GRANULAR LOOKUP
 // Empty placeholder to prevent errors
-console.log(GRANULAR_LOOKUP);
+console.log(GRANULAR_LOOKUP)
 
 // --- HELPER FUNCTIONS ---
 // REVERTED: Use full numbers (e.g. $10,000) for general display as requested
@@ -627,9 +625,13 @@ const Sidebar = ({ profile, setView, filters, setFilters, mapColor, setMapColor,
 
         <div className="mt-10 pt-6 border-t border-slate-100">
             <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">Data Sources</h4>
-            <p className="text-[10px] text-slate-400 leading-relaxed">
-                Census 2021 (CA/US) • Climate Normals (1981-2010) • Income estimates based on 2021 median adjusted for your profile.
-            </p>
+            <div className="text-[10px] text-slate-400 leading-relaxed space-y-1">
+                <p>• <strong>Economic:</strong> 2021 Census of Population [Canada] / American Community Survey (PUMS).</p>
+                <p>• <strong>Housing:</strong> Rental Market Reports.</p>
+                <p>• <strong>Weather:</strong> Climate Normals (1981-2010).</p>
+                <p>• <strong>Transit:</strong> Synthesized density scores.</p>
+                <p>• <strong>Work-Life:</strong> Regional labor stats.</p>
+            </div>
         </div>
     </aside>
 );
