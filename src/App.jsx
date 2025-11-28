@@ -6,7 +6,7 @@ import {GRANULAR_LOOKUP} from "./all_data.js"
 // --- CONFIGURATION ---
 // ⚠️ Set to empty string "" to force the Static Map (Original colorful look).
 // Paste your key back if you want the interactive Google Map.
-const GOOGLE_MAPS_API_KEY = "AIzaSyAqw54yCjz_N5g2_Gcu6WhhWG0V4umsrOE";
+const GOOGLE_MAPS_API_KEY = "";
 
 // --- 1. DATASETS ---
 
@@ -84,7 +84,7 @@ const BENCHMARK_LOOKUP = {"Canada": {
     "USA": {"Age_Bin": {"18-24": [9500, 87.6], "25-35": [40000, 96.3], "35-45": [50000, 95.6], "45-55": [55000, 96.2], "55+": [29580, 95.7]}, "Edu_Bin": {"College": [40000, 96.3], "Graduate or Above": [84030, 97.4], "High School": [20000, 92.9], "University": [60000, 96.8]}, "Job_Bin": {"Arts & Design": [50000, 94.7], "Business & Office": [80000, 97.5], "Other": [22400, 92.8], "STEM & Technical": [92000, 98.5], "Social Service": [58000, 97.6]}}};
 
 // D. GRANULAR LOOKUP
-console.log(GRANULAR_LOOKUP);
+const GRANULAR_LOOKUP = {};
 
 // --- HELPER FUNCTIONS ---
 const formatCurrency = (val) => `$${Math.round(val).toLocaleString()}`;
@@ -158,7 +158,6 @@ const calculateMetrics = (profile) => {
 };
 
 // --- MAP LEGEND COMPONENT ---
-// UPDATED: Now supports 5 levels of granularity
 const MapLegend = ({ mapColor }) => {
     if (mapColor === 'income') {
         return (
@@ -209,7 +208,6 @@ const MapLegend = ({ mapColor }) => {
 const StaticMap = ({ markers = [], onMarkerClick, mapColor }) => {
     const [imageLoaded, setImageLoaded] = useState(false);
 
-    // UPDATED: 5-level color scale
     const getMarkerColor = (city, type) => {
         if (type === 'income') {
             if (city.projectedIncome > 120000) return '#15803d'; // Deep Green
@@ -295,9 +293,8 @@ const GoogleMapComponent = ({ markers = [], onMarkerClick, mapColor }) => {
     const markersRef = useRef([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [isMapReady, setIsMapReady] = useState(false);
+    const [isMapReady, setIsMapReady] = useState(false); // Track if map is fully loaded
 
-    // UPDATED: 5-level color scale
     const getMarkerColor = useCallback((city, type) => {
         if (type === 'income') {
             if (city.projectedIncome > 120000) return '#15803d';
@@ -323,15 +320,18 @@ const GoogleMapComponent = ({ markers = [], onMarkerClick, mapColor }) => {
         return '#333';
     }, []);
 
+    // 1. Define updateMarkers with useCallback so it's a stable dependency
     const updateMarkers = useCallback(() => {
         if (!window.google?.maps || !googleMapRef.current) return;
 
+        // Clear existing markers
         markersRef.current.forEach(m => m.setMap(null));
         markersRef.current = [];
 
         markers.forEach(city => {
             const color = getMarkerColor(city, mapColor);
 
+            // Create marker
             const marker = new window.google.maps.Marker({
                 position: { lat: city.lat, lng: city.lng },
                 map: googleMapRef.current,
@@ -346,6 +346,7 @@ const GoogleMapComponent = ({ markers = [], onMarkerClick, mapColor }) => {
                 }
             });
 
+            // Add click listener
             marker.addListener("click", () => {
                 onMarkerClick(city);
             });
@@ -354,6 +355,7 @@ const GoogleMapComponent = ({ markers = [], onMarkerClick, mapColor }) => {
         });
     }, [markers, mapColor, getMarkerColor, onMarkerClick]);
 
+    // 2. Initialization Effect - Runs ONCE
     useEffect(() => {
         const initMap = () => {
             if (!mapRef.current || !window.google || !window.google.maps) return;
@@ -371,9 +373,10 @@ const GoogleMapComponent = ({ markers = [], onMarkerClick, mapColor }) => {
                         backgroundColor: '#e0e7eb'
                     });
 
+                    // Add idle listener to remove loading spinner once tiles are ready
                     window.google.maps.event.addListenerOnce(googleMapRef.current, 'idle', () => {
                         setLoading(false);
-                        setIsMapReady(true);
+                        setIsMapReady(true); // Signal that map is ready for markers
                     });
                 }
             } catch (err) {
@@ -413,9 +416,11 @@ const GoogleMapComponent = ({ markers = [], onMarkerClick, mapColor }) => {
                 }, 8000);
             }
         }
+        // We explicitly do NOT include dependencies here to ensure this runs exactly once on mount
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // 3. Update Effect - Runs when data changes or map becomes ready
     useEffect(() => {
         if (isMapReady) {
             updateMarkers();
@@ -679,6 +684,32 @@ export default function App() {
         return data.filter(c => c.emp >= filters.emp && c.projectedIncome >= filters.income);
     }, [data, filters]);
 
+    // PREPARE WEATHER CHART DATA (SEASONAL SPLIT LOGIC)
+    const weatherChartData = useMemo(() => {
+        return data.filter(c => selectedCities.includes(c.city)).map(city => {
+            // Simple heuristic to split annual data into seasonal chunks
+            const isSnowy = city.snow > 15; // Threshold for "Winter Snow" cities
+
+            return {
+                ...city,
+                // Bar 1: Early Year (Jan-Mar). If snowy, use 60% of snow. If not, use 40% of rain.
+                part1: isSnowy ? city.snow * 0.6 : city.rain * 0.4,
+
+                // Bar 2: Spring (Apr-May). Use 40% of rain.
+                part2: city.rain * 0.4,
+
+                // Bar 3: Summer/Core (Jun-Sep). Use 100% of sun.
+                part3: city.sun,
+
+                // Bar 4: Autumn (Oct-Nov). Use 60% of rain.
+                part4: city.rain * 0.6,
+
+                // Bar 5: Late Year (Dec). If snowy, use 40% of snow. If not, use nothing/rain.
+                part5: isSnowy ? city.snow * 0.4 : 0,
+            };
+        });
+    }, [data, selectedCities]);
+
     if (!mounted) return null;
     if (view === 'wizard') return <Wizard onFinish={handleFinishWizard} />;
 
@@ -734,11 +765,6 @@ export default function App() {
                                         mapColor={mapColor}
                                         onMarkerClick={setDetailCity}
                                     />
-                                    {/* Warning banner about missing API Key */}
-                                    <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-2 rounded-lg shadow-md flex items-center space-x-2 z-[999]">
-                                        <AlertTriangle size={16} />
-                                        <span className="text-xs font-medium">No API Key detected. Using static map.</span>
-                                    </div>
                                 </>
                             )}
 
@@ -907,18 +933,31 @@ export default function App() {
 
                                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                                             <div className="mb-6">
-                                                <h3 className="font-bold text-lg text-slate-800">Weather Distribution</h3>
-                                                <p className="text-xs text-slate-400">Sunny vs Rainy vs Snowy days per year</p>
+                                                <h3 className="font-bold text-lg text-slate-800">Weather Distribution (Jan - Dec)</h3>
+                                                <p className="text-xs text-slate-400">Estimated seasonal pattern: Winter → Summer → Winter</p>
                                             </div>
                                             <div className="h-72">
                                                 <ResponsiveContainer>
-                                                    <BarChart data={data.filter(c => selectedCities.includes(c.city))} layout="vertical" stackOffset="expand">
-                                                        <XAxis type="number" hide />
+                                                    {/* Using the new weatherChartData for seasonal split */}
+                                                    <BarChart data={weatherChartData} layout="vertical" stackOffset="expand">
+                                                        <XAxis type="number" domain={[0, 1]} ticks={[0, 1/11, 2/11, 3/11, 4/11, 5/11, 6/11, 7/11, 8/11, 9/11, 10/11, 1]} tickFormatter={(val) => { const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]; const index = Math.round(val * 11); return months[index] || ""; }} axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} interval={0}/>
                                                         <YAxis dataKey="city" type="category" width={100} tick={{fontSize: 12}} axisLine={false} tickLine={false} />
                                                         <RechartsTooltip cursor={{fill: 'transparent'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-                                                        <Bar dataKey="sun" stackId="a" fill="#FCD34D" />
-                                                        <Bar dataKey="rain" stackId="a" fill="#60A5FA" />
-                                                        <Bar dataKey="snow" stackId="a" fill="#94A3B8" radius={[0, 6, 6, 0]} />
+
+                                                        {/* Jan-Mar (Snow or Rain) */}
+                                                        <Bar dataKey="part1" stackId="a" fill="#94A3B8" radius={[6, 0, 0, 6]} name="Winter Start" />
+
+                                                        {/* Apr-May (Rain) */}
+                                                        <Bar dataKey="part2" stackId="a" fill="#60A5FA" name="Spring Rain" />
+
+                                                        {/* Jun-Sep (Sun) */}
+                                                        <Bar dataKey="part3" stackId="a" fill="#FCD34D" name="Summer Sun" />
+
+                                                        {/* Oct-Nov (Rain) */}
+                                                        <Bar dataKey="part4" stackId="a" fill="#60A5FA" name="Autumn Rain" />
+
+                                                        {/* Dec (Snow or Rain) */}
+                                                        <Bar dataKey="part5" stackId="a" fill="#94A3B8" radius={[0, 6, 6, 0]} name="Winter End" />
                                                     </BarChart>
                                                 </ResponsiveContainer>
                                             </div>
