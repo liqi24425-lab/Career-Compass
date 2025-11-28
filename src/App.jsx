@@ -15,8 +15,9 @@ import {
 } from 'recharts';
 import { DollarSign, TrendingUp, ArrowLeft, X, Edit2, Map as MapIcon, BarChart2, Home, Save, AlertTriangle, Loader2, Info, Clock, Bus } from 'lucide-react';
 import {GRANULAR_LOOKUP} from "./all_data.js"
+
 // --- CONFIGURATION ---
-const GOOGLE_MAPS_API_KEY = "AIzaSyAqw54yCjz_N5g2_Gcu6WhhWG0V4umsrOE";
+const GOOGLE_MAPS_API_KEY = "2021 Census of Population [Canada] / American Community Survey (PUMS)";
 
 // --- 1. DATASETS ---
 const CITY_DATA = [
@@ -68,7 +69,7 @@ const BENCHMARK_LOOKUP = {"Canada": {"Age_Bin": {"18-24": [20000, 78.9], "25-35"
 
 // D. GRANULAR LOOKUP
 // Empty placeholder to prevent errors
-console.log(GRANULAR_LOOKUP)
+console.log(GRANULAR_LOOKUP);
 
 // --- HELPER FUNCTIONS ---
 // REVERTED: Use full numbers (e.g. $10,000) for general display as requested
@@ -140,7 +141,7 @@ const calculateMetrics = (profile) => {
 const MapLegend = ({ mapColor }) => {
     if (mapColor === 'income') {
         return (
-            <div className="absolute bottom-6 left-6 bg-white/95 backdrop-blur p-4 rounded-xl border border-slate-200 shadow-md text-xs z-[9999] pointer-events-none min-w-[140px]">
+            <div className="absolute bottom-20 left-6 bg-white/95 backdrop-blur p-4 rounded-xl border border-slate-200 shadow-md text-xs z-[9999] pointer-events-none min-w-[140px]">
                 <div className="font-bold mb-3 text-slate-700 uppercase tracking-wider border-b border-slate-100 pb-2">Income Level</div>
                 <div className="space-y-2 font-medium text-slate-600">
                     <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#15803d] mr-2 shadow-sm"></span> Very High ({'>'}$120k)</div>
@@ -154,7 +155,7 @@ const MapLegend = ({ mapColor }) => {
     }
     if (mapColor === 'emp') {
         return (
-            <div className="absolute bottom-6 left-6 bg-white/95 backdrop-blur p-4 rounded-xl border border-slate-200 shadow-md text-xs z-[9999] pointer-events-none min-w-[140px]">
+            <div className="absolute bottom-20 left-6 bg-white/95 backdrop-blur p-4 rounded-xl border border-slate-200 shadow-md text-xs z-[9999] pointer-events-none min-w-[140px]">
                 <div className="font-bold mb-3 text-slate-700 uppercase tracking-wider border-b border-slate-100 pb-2">Employment Rate</div>
                 <div className="space-y-2 font-medium text-slate-600">
                     <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#15803d] mr-2 shadow-sm"></span> Very High ({'>'}90%)</div>
@@ -168,7 +169,7 @@ const MapLegend = ({ mapColor }) => {
     }
     if (mapColor === 'afford') {
         return (
-            <div className="absolute bottom-6 left-6 bg-white/95 backdrop-blur p-4 rounded-xl border border-slate-200 shadow-md text-xs z-[9999] pointer-events-none min-w-[140px]">
+            <div className="absolute bottom-20 left-6 bg-white/95 backdrop-blur p-4 rounded-xl border border-slate-200 shadow-md text-xs z-[9999] pointer-events-none min-w-[140px]">
                 <div className="font-bold mb-3 text-slate-700 uppercase tracking-wider border-b border-slate-100 pb-2">Affordability</div>
                 <div className="space-y-2 font-medium text-slate-600">
                     <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#1e40af] mr-2 shadow-sm"></span> Excellent ({'>'}5.0)</div>
@@ -586,7 +587,7 @@ const Sidebar = ({ profile, setView, filters, setFilters, mapColor, setMapColor,
         <div className="space-y-8">
             <div>
                 <div className="flex justify-between mb-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase">Employment Rate</label>
+                    <label className="text-xs font-bold text-slate-400 uppercase">Min Employment</label>
                     {/* ADDED: > symbol in the label */}
                     <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{'>'} {filters.emp}%</span>
                 </div>
@@ -595,7 +596,7 @@ const Sidebar = ({ profile, setView, filters, setFilters, mapColor, setMapColor,
             </div>
             <div>
                 <div className="flex justify-between mb-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase">Median Income</label>
+                    <label className="text-xs font-bold text-slate-400 uppercase">Min Income</label>
                     {/* ADDED: > symbol in the label and used formatCurrency */}
                     <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">{'>'} {formatCurrency(filters.income)}</span>
                 </div>
@@ -950,6 +951,7 @@ export default function App() {
                                                             cursor={{fill: '#f8fafc'}}
                                                             contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
                                                             formatter={(value, name) => {
+                                                                // Round specifically for this chart tooltip
                                                                 if (name === "Projected Income") return [`$${Math.round(value/1000)}k`, name];
                                                                 if (name === "Affordability Index") return [value.toFixed(1), name];
                                                                 return [value, name];
