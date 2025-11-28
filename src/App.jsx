@@ -1,54 +1,68 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, Legend, ComposedChart, Area } from 'recharts';
-import { DollarSign, TrendingUp, ArrowLeft, X, Edit2, Map as MapIcon, BarChart2, Home, Save, AlertTriangle, Loader2, Info } from 'lucide-react';
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip as RechartsTooltip,
+    ResponsiveContainer,
+    LineChart,
+    Line,
+    Legend,
+    ComposedChart,
+    ReferenceLine
+} from 'recharts';
+import { DollarSign, TrendingUp, ArrowLeft, X, Edit2, Map as MapIcon, BarChart2, Home, Save, AlertTriangle, Loader2, Info, Clock, Bus } from 'lucide-react';
 import {GRANULAR_LOOKUP} from "./all_data.js"
 
 // --- CONFIGURATION ---
 const GOOGLE_MAPS_API_KEY = "AIzaSyAqw54yCjz_N5g2_Gcu6WhhWG0V4umsrOE";
 
 // --- 1. DATASETS ---
+// Changed workHours to a single average number for clarity
 const CITY_DATA = [
-    {"city": "Toronto", "country": "Canada", "lat": 43.6532, "lng": -79.3832, "pop": 6202225, "rent": 1800, "temp": 9.4, "sun": 305, "rain": 110, "snow": 40, "commute": 34, "weather": "Snowy", "baseIncome": 85000, "baseEmp": 61.5},
-    {"city": "Vancouver", "country": "Canada", "lat": 49.2827, "lng": -123.1207, "pop": 2642825, "rent": 2100, "temp": 10.4, "sun": 289, "rain": 168, "snow": 9, "commute": 30, "weather": "Rainy", "baseIncome": 82000, "baseEmp": 62.0},
-    {"city": "Montreal", "country": "Canada", "lat": 45.5017, "lng": -73.5673, "pop": 4291732, "rent": 1100, "temp": 6.8, "sun": 305, "rain": 160, "snow": 60, "commute": 30, "weather": "Snowy", "baseIncome": 72000, "baseEmp": 60.5},
-    {"city": "Calgary", "country": "Canada", "lat": 51.0447, "lng": -114.0719, "pop": 1481806, "rent": 1350, "temp": 4.4, "sun": 333, "rain": 68, "snow": 55, "commute": 27, "weather": "Sunny", "baseIncome": 89000, "baseEmp": 65.0},
-    {"city": "Edmonton", "country": "Canada", "lat": 53.5461, "lng": -113.4938, "pop": 1418118, "rent": 1250, "temp": 4.2, "sun": 325, "rain": 78, "snow": 60, "commute": 26, "weather": "Sunny", "baseIncome": 86000, "baseEmp": 64.0},
-    {"city": "Ottawa-Gatineau", "country": "Canada", "lat": 45.4215, "lng": -75.6972, "pop": 1488307, "rent": 1450, "temp": 6.6, "sun": 315, "rain": 120, "snow": 65, "commute": 28, "weather": "Snowy", "baseIncome": 88000, "baseEmp": 63.0},
-    {"city": "Winnipeg", "country": "Canada", "lat": 49.8951, "lng": -97.1384, "pop": 834678, "rent": 1100, "temp": 3.0, "sun": 316, "rain": 75, "snow": 65, "commute": 25, "weather": "Snowy", "baseIncome": 74000, "baseEmp": 61.0},
-    {"city": "Quebec City", "country": "Canada", "lat": 46.8139, "lng": -71.2080, "pop": 839311, "rent": 1000, "temp": 5.4, "sun": 290, "rain": 140, "snow": 75, "commute": 25, "weather": "Snowy", "baseIncome": 70000, "baseEmp": 60.0},
-    {"city": "Halifax", "country": "Canada", "lat": 44.6488, "lng": -63.5752, "pop": 465703, "rent": 1400, "temp": 7.5, "sun": 250, "rain": 150, "snow": 35, "commute": 23, "weather": "Varied", "baseIncome": 71000, "baseEmp": 58.0},
-    {"city": "Kitchener-Waterloo", "country": "Canada", "lat": 43.4516, "lng": -80.4925, "pop": 575847, "rent": 1600, "temp": 7.5, "sun": 295, "rain": 130, "snow": 50, "commute": 26, "weather": "Snowy", "baseIncome": 82000, "baseEmp": 62.0},
-    {"city": "Hamilton", "country": "Canada", "lat": 43.2557, "lng": -79.8711, "pop": 785184, "rent": 1550, "temp": 8.9, "sun": 300, "rain": 125, "snow": 40, "commute": 29, "weather": "Snowy", "baseIncome": 80000, "baseEmp": 60.0},
-    {"city": "London", "country": "Canada", "lat": 42.9849, "lng": -81.2453, "pop": 543551, "rent": 1450, "temp": 8.5, "sun": 290, "rain": 135, "snow": 50, "commute": 24, "weather": "Snowy", "baseIncome": 76000, "baseEmp": 59.0},
-    {"city": "Victoria", "country": "Canada", "lat": 48.4284, "lng": -123.3656, "pop": 397237, "rent": 1700, "temp": 10.8, "sun": 308, "rain": 150, "snow": 5, "commute": 22, "weather": "Rainy", "baseIncome": 78000, "baseEmp": 58.0},
-    {"city": "Saskatoon", "country": "Canada", "lat": 52.1332, "lng": -106.6700, "pop": 317480, "rent": 1150, "temp": 3.5, "sun": 319, "rain": 70, "snow": 60, "commute": 20, "weather": "Sunny", "baseIncome": 76000, "baseEmp": 64.0},
-    {"city": "Moncton", "country": "Canada", "lat": 46.0878, "lng": -64.7782, "pop": 157717, "rent": 1050, "temp": 6.1, "sun": 285, "rain": 145, "snow": 65, "commute": 19, "weather": "Snowy", "baseIncome": 70000, "baseEmp": 57.0},
-    {"city": "New York City", "country": "USA", "lat": 40.7128, "lng": -74.0060, "pop": 8467513, "rent": 3600, "temp": 12.9, "sun": 224, "rain": 122, "snow": 25, "commute": 37, "weather": "Varied", "baseIncome": 75000, "baseEmp": 59.0},
-    {"city": "Los Angeles", "country": "USA", "lat": 34.0522, "lng": -118.2437, "pop": 3849297, "rent": 2700, "temp": 18.6, "sun": 284, "rain": 35, "snow": 0, "commute": 31, "weather": "Sunny", "baseIncome": 73000, "baseEmp": 60.0},
-    {"city": "Chicago", "country": "USA", "lat": 41.8781, "lng": -87.6298, "pop": 2696555, "rent": 2000, "temp": 10.5, "sun": 189, "rain": 125, "snow": 28, "commute": 32, "weather": "Windy", "baseIncome": 71000, "baseEmp": 61.0},
-    {"city": "Houston", "country": "USA", "lat": 29.7604, "lng": -95.3698, "pop": 2288250, "rent": 1450, "temp": 21.0, "sun": 204, "rain": 104, "snow": 0, "commute": 30, "weather": "Humid", "baseIncome": 69000, "baseEmp": 63.0},
-    {"city": "Phoenix", "country": "USA", "lat": 33.4484, "lng": -112.0740, "pop": 1624569, "rent": 1550, "temp": 23.9, "sun": 299, "rain": 36, "snow": 0, "commute": 26, "weather": "Hot", "baseIncome": 72000, "baseEmp": 61.0},
-    {"city": "Philadelphia", "country": "USA", "lat": 39.9526, "lng": -75.1652, "pop": 1576251, "rent": 1750, "temp": 13.3, "sun": 205, "rain": 117, "snow": 20, "commute": 33, "weather": "Varied", "baseIncome": 60000, "baseEmp": 58.0},
-    {"city": "San Antonio", "country": "USA", "lat": 29.4241, "lng": -98.4936, "pop": 1451853, "rent": 1300, "temp": 20.8, "sun": 220, "rain": 80, "snow": 0, "commute": 27, "weather": "Hot", "baseIncome": 64000, "baseEmp": 60.0},
-    {"city": "San Diego", "country": "USA", "lat": 32.7157, "lng": -117.1611, "pop": 1381611, "rent": 2900, "temp": 17.8, "sun": 266, "rain": 42, "snow": 0, "commute": 26, "weather": "Sunny", "baseIncome": 98000, "baseEmp": 61.0},
-    {"city": "Dallas", "country": "USA", "lat": 32.7767, "lng": -96.7970, "pop": 1288457, "rent": 1650, "temp": 19.5, "sun": 234, "rain": 80, "snow": 1, "commute": 29, "weather": "Hot", "baseIncome": 70000, "baseEmp": 65.0},
-    {"city": "Austin", "country": "USA", "lat": 30.2672, "lng": -97.7431, "pop": 964177, "rent": 1700, "temp": 20.5, "sun": 228, "rain": 85, "snow": 1, "commute": 28, "weather": "Sunny", "baseIncome": 86000, "baseEmp": 68.0},
-    {"city": "San Jose", "country": "USA", "lat": 37.3382, "lng": -121.8863, "pop": 983489, "rent": 3100, "temp": 16.5, "sun": 257, "rain": 62, "snow": 0, "commute": 30, "weather": "Sunny", "baseIncome": 148000, "baseEmp": 66.0},
-    {"city": "San Francisco", "country": "USA", "lat": 37.7749, "lng": -122.4194, "pop": 815201, "rent": 3300, "temp": 14.6, "sun": 221, "rain": 115, "snow": 0, "commute": 25, "weather": "Foggy", "baseIncome": 139000, "baseEmp": 67.0},
-    {"city": "Charlotte", "country": "USA", "lat": 35.2271, "lng": -80.8431, "pop": 879709, "rent": 1600, "temp": 15.8, "sun": 259, "rain": 70, "snow": 0, "commute": 34, "weather": "Varied", "baseIncome": 74000, "baseEmp": 64.0},
-    {"city": "Columbus", "country": "USA", "lat": 39.9612, "lng": -82.9988, "pop": 906528, "rent": 1350, "temp": 11.8, "sun": 175, "rain": 130, "snow": 20, "commute": 24, "weather": "Varied", "baseIncome": 67000, "baseEmp": 63.0},
-    {"city": "Jacksonville", "country": "USA", "lat": 30.3322, "lng": -81.6557, "pop": 954614, "rent": 1450, "temp": 20.3, "sun": 218, "rain": 110, "snow": 5, "commute": 26, "weather": "Sunny", "baseIncome": 68000, "baseEmp": 60.0},
-    {"city": "Seattle", "country": "USA", "lat": 47.6062, "lng": -122.3321, "pop": 733919, "rent": 2200, "temp": 11.4, "sun": 152, "rain": 150, "snow": 4, "commute": 32, "weather": "Rainy", "baseIncome": 115000, "baseEmp": 68.0},
-    {"city": "Denver", "country": "USA", "lat": 39.7392, "lng": -104.9903, "pop": 711463, "rent": 1800, "temp": 10.1, "sun": 245, "rain": 84, "snow": 34, "commute": 28, "weather": "Snowy", "baseIncome": 85000, "baseEmp": 67.0},
-    {"city": "Washington, D.C.", "country": "USA", "lat": 38.9072, "lng": -77.0369, "pop": 670050, "rent": 2400, "temp": 14.6, "sun": 203, "rain": 115, "snow": 5, "commute": 35, "weather": "Varied", "baseIncome": 101000, "baseEmp": 66.0},
-    {"city": "Boston", "country": "USA", "lat": 42.3601, "lng": -71.0589, "pop": 654776, "rent": 2600, "temp": 10.8, "sun": 200, "rain": 120, "snow": 22, "commute": 32, "weather": "Varied", "baseIncome": 90000, "baseEmp": 65.0},
-    {"city": "Nashville", "country": "USA", "lat": 36.1627, "lng": -86.7816, "pop": 692587, "rent": 1700, "temp": 15.3, "sun": 205, "rain": 120, "snow": 3, "commute": 29, "weather": "Humid", "baseIncome": 70000, "baseEmp": 64.0},
-    {"city": "Las Vegas", "country": "USA", "lat": 36.1699, "lng": -115.1398, "pop": 646790, "rent": 1400, "temp": 20.3, "sun": 310, "rain": 26, "snow": 0, "commute": 26, "weather": "Sunny", "baseIncome": 66000, "baseEmp": 59.0},
-    {"city": "Portland", "country": "USA", "lat": 45.5152, "lng": -122.6784, "pop": 641162, "rent": 1600, "temp": 12.4, "sun": 144, "rain": 164, "snow": 4, "commute": 27, "weather": "Rainy", "baseIncome": 80000, "baseEmp": 63.0},
-    {"city": "Oklahoma City", "country": "USA", "lat": 35.4676, "lng": -97.5164, "pop": 687725, "rent": 1100, "temp": 16.1, "sun": 235, "rain": 83, "snow": 5, "commute": 24, "weather": "Sunny", "baseIncome": 60000, "baseEmp": 61.0},
-    {"city": "El Paso", "country": "USA", "lat": 31.7619, "lng": -106.4850, "pop": 678058, "rent": 1000, "temp": 18.1, "sun": 293, "rain": 45, "snow": 1, "commute": 23, "weather": "Hot", "baseIncome": 59000, "baseEmp": 55.0},
-    {"city": "Indianapolis", "country": "USA", "lat": 39.7684, "lng": -86.1581, "pop": 882039, "rent": 1200, "temp": 11.3, "sun": 187, "rain": 129, "snow": 20, "commute": 26, "weather": "Varied", "baseIncome": 65000, "baseEmp": 62.0},
-    {"city": "Fort Worth", "country": "USA", "lat": 32.7555, "lng": -97.3308, "pop": 935508, "rent": 1350, "temp": 19.0, "sun": 229, "rain": 80, "snow": 1, "commute": 29, "weather": "Hot", "baseIncome": 75000, "baseEmp": 64.0}
+    {"city": "Toronto", "country": "Canada", "lat": 43.6532, "lng": -79.3832, "pop": 6202225, "rent": 1800, "temp": 9.4, "sun": 305, "rain": 110, "snow": 40, "commute": 34, "weather": "Snowy", "baseIncome": 85000, "baseEmp": 61.5, "transitScore": 85, "workHours": 37.5},
+    {"city": "Vancouver", "country": "Canada", "lat": 49.2827, "lng": -123.1207, "pop": 2642825, "rent": 2100, "temp": 10.4, "sun": 289, "rain": 168, "snow": 9, "commute": 30, "weather": "Rainy", "baseIncome": 82000, "baseEmp": 62.0, "transitScore": 80, "workHours": 38},
+    {"city": "Montreal", "country": "Canada", "lat": 45.5017, "lng": -73.5673, "pop": 4291732, "rent": 1100, "temp": 6.8, "sun": 305, "rain": 160, "snow": 60, "commute": 30, "weather": "Snowy", "baseIncome": 72000, "baseEmp": 60.5, "transitScore": 82, "workHours": 36},
+    {"city": "Calgary", "country": "Canada", "lat": 51.0447, "lng": -114.0719, "pop": 1481806, "rent": 1350, "temp": 4.4, "sun": 333, "rain": 68, "snow": 55, "commute": 27, "weather": "Sunny", "baseIncome": 89000, "baseEmp": 65.0, "transitScore": 60, "workHours": 40},
+    {"city": "Edmonton", "country": "Canada", "lat": 53.5461, "lng": -113.4938, "pop": 1418118, "rent": 1250, "temp": 4.2, "sun": 325, "rain": 78, "snow": 60, "commute": 26, "weather": "Sunny", "baseIncome": 86000, "baseEmp": 64.0, "transitScore": 58, "workHours": 40},
+    {"city": "Ottawa-Gatineau", "country": "Canada", "lat": 45.4215, "lng": -75.6972, "pop": 1488307, "rent": 1450, "temp": 6.6, "sun": 315, "rain": 120, "snow": 65, "commute": 28, "weather": "Snowy", "baseIncome": 88000, "baseEmp": 63.0, "transitScore": 65, "workHours": 37.5},
+    {"city": "Winnipeg", "country": "Canada", "lat": 49.8951, "lng": -97.1384, "pop": 834678, "rent": 1100, "temp": 3.0, "sun": 316, "rain": 75, "snow": 65, "commute": 25, "weather": "Snowy", "baseIncome": 74000, "baseEmp": 61.0, "transitScore": 55, "workHours": 38},
+    {"city": "Quebec City", "country": "Canada", "lat": 46.8139, "lng": -71.2080, "pop": 839311, "rent": 1000, "temp": 5.4, "sun": 290, "rain": 140, "snow": 75, "commute": 25, "weather": "Snowy", "baseIncome": 70000, "baseEmp": 60.0, "transitScore": 52, "workHours": 36},
+    {"city": "Halifax", "country": "Canada", "lat": 44.6488, "lng": -63.5752, "pop": 465703, "rent": 1400, "temp": 7.5, "sun": 250, "rain": 150, "snow": 35, "commute": 23, "weather": "Varied", "baseIncome": 71000, "baseEmp": 58.0, "transitScore": 50, "workHours": 38},
+    {"city": "Kitchener-Waterloo", "country": "Canada", "lat": 43.4516, "lng": -80.4925, "pop": 575847, "rent": 1600, "temp": 7.5, "sun": 295, "rain": 130, "snow": 50, "commute": 26, "weather": "Snowy", "baseIncome": 82000, "baseEmp": 62.0, "transitScore": 55, "workHours": 40},
+    {"city": "Hamilton", "country": "Canada", "lat": 43.2557, "lng": -79.8711, "pop": 785184, "rent": 1550, "temp": 8.9, "sun": 300, "rain": 125, "snow": 40, "commute": 29, "weather": "Snowy", "baseIncome": 80000, "baseEmp": 60.0, "transitScore": 60, "workHours": 40},
+    {"city": "London", "country": "Canada", "lat": 42.9849, "lng": -81.2453, "pop": 543551, "rent": 1450, "temp": 8.5, "sun": 290, "rain": 135, "snow": 50, "commute": 24, "weather": "Snowy", "baseIncome": 76000, "baseEmp": 59.0, "transitScore": 50, "workHours": 38},
+    {"city": "Victoria", "country": "Canada", "lat": 48.4284, "lng": -123.3656, "pop": 397237, "rent": 1700, "temp": 10.8, "sun": 308, "rain": 150, "snow": 5, "commute": 22, "weather": "Rainy", "baseIncome": 78000, "baseEmp": 58.0, "transitScore": 65, "workHours": 36},
+    {"city": "Saskatoon", "country": "Canada", "lat": 52.1332, "lng": -106.6700, "pop": 317480, "rent": 1150, "temp": 3.5, "sun": 319, "rain": 70, "snow": 60, "commute": 20, "weather": "Sunny", "baseIncome": 76000, "baseEmp": 64.0, "transitScore": 45, "workHours": 40},
+    {"city": "Moncton", "country": "Canada", "lat": 46.0878, "lng": -64.7782, "pop": 157717, "rent": 1050, "temp": 6.1, "sun": 285, "rain": 145, "snow": 65, "commute": 19, "weather": "Snowy", "baseIncome": 70000, "baseEmp": 57.0, "transitScore": 40, "workHours": 38},
+    {"city": "New York City", "country": "USA", "lat": 40.7128, "lng": -74.0060, "pop": 8467513, "rent": 3600, "temp": 12.9, "sun": 224, "rain": 122, "snow": 25, "commute": 37, "weather": "Varied", "baseIncome": 75000, "baseEmp": 59.0, "transitScore": 98, "workHours": 44},
+    {"city": "Los Angeles", "country": "USA", "lat": 34.0522, "lng": -118.2437, "pop": 3849297, "rent": 2700, "temp": 18.6, "sun": 284, "rain": 35, "snow": 0, "commute": 31, "weather": "Sunny", "baseIncome": 73000, "baseEmp": 60.0, "transitScore": 65, "workHours": 42},
+    {"city": "Chicago", "country": "USA", "lat": 41.8781, "lng": -87.6298, "pop": 2696555, "rent": 2000, "temp": 10.5, "sun": 189, "rain": 125, "snow": 28, "commute": 32, "weather": "Windy", "baseIncome": 71000, "baseEmp": 61.0, "transitScore": 85, "workHours": 40},
+    {"city": "Houston", "country": "USA", "lat": 29.7604, "lng": -95.3698, "pop": 2288250, "rent": 1450, "temp": 21.0, "sun": 204, "rain": 104, "snow": 0, "commute": 30, "weather": "Humid", "baseIncome": 69000, "baseEmp": 63.0, "transitScore": 45, "workHours": 43},
+    {"city": "Phoenix", "country": "USA", "lat": 33.4484, "lng": -112.0740, "pop": 1624569, "rent": 1550, "temp": 23.9, "sun": 299, "rain": 36, "snow": 0, "commute": 26, "weather": "Hot", "baseIncome": 72000, "baseEmp": 61.0, "transitScore": 40, "workHours": 41},
+    {"city": "Philadelphia", "country": "USA", "lat": 39.9526, "lng": -75.1652, "pop": 1576251, "rent": 1750, "temp": 13.3, "sun": 205, "rain": 117, "snow": 20, "commute": 33, "weather": "Varied", "baseIncome": 60000, "baseEmp": 58.0, "transitScore": 80, "workHours": 39},
+    {"city": "San Antonio", "country": "USA", "lat": 29.4241, "lng": -98.4936, "pop": 1451853, "rent": 1300, "temp": 20.8, "sun": 220, "rain": 80, "snow": 0, "commute": 27, "weather": "Hot", "baseIncome": 64000, "baseEmp": 60.0, "transitScore": 40, "workHours": 41},
+    {"city": "San Diego", "country": "USA", "lat": 32.7157, "lng": -117.1611, "pop": 1381611, "rent": 2900, "temp": 17.8, "sun": 266, "rain": 42, "snow": 0, "commute": 26, "weather": "Sunny", "baseIncome": 98000, "baseEmp": 61.0, "transitScore": 55, "workHours": 40},
+    {"city": "Dallas", "country": "USA", "lat": 32.7767, "lng": -96.7970, "pop": 1288457, "rent": 1650, "temp": 19.5, "sun": 234, "rain": 80, "snow": 1, "commute": 29, "weather": "Hot", "baseIncome": 70000, "baseEmp": 65.0, "transitScore": 50, "workHours": 44},
+    {"city": "Austin", "country": "USA", "lat": 30.2672, "lng": -97.7431, "pop": 964177, "rent": 1700, "temp": 20.5, "sun": 228, "rain": 85, "snow": 1, "commute": 28, "weather": "Sunny", "baseIncome": 86000, "baseEmp": 68.0, "transitScore": 45, "workHours": 45},
+    {"city": "San Jose", "country": "USA", "lat": 37.3382, "lng": -121.8863, "pop": 983489, "rent": 3100, "temp": 16.5, "sun": 257, "rain": 62, "snow": 0, "commute": 30, "weather": "Sunny", "baseIncome": 148000, "baseEmp": 66.0, "transitScore": 60, "workHours": 48},
+    {"city": "San Francisco", "country": "USA", "lat": 37.7749, "lng": -122.4194, "pop": 815201, "rent": 3300, "temp": 14.6, "sun": 221, "rain": 115, "snow": 0, "commute": 25, "weather": "Foggy", "baseIncome": 139000, "baseEmp": 67.0, "transitScore": 90, "workHours": 46},
+    {"city": "Charlotte", "country": "USA", "lat": 35.2271, "lng": -80.8431, "pop": 879709, "rent": 1600, "temp": 15.8, "sun": 259, "rain": 70, "snow": 0, "commute": 34, "weather": "Varied", "baseIncome": 74000, "baseEmp": 64.0, "transitScore": 35, "workHours": 42},
+    {"city": "Columbus", "country": "USA", "lat": 39.9612, "lng": -82.9988, "pop": 906528, "rent": 1350, "temp": 11.8, "sun": 175, "rain": 130, "snow": 20, "commute": 24, "weather": "Varied", "baseIncome": 67000, "baseEmp": 63.0, "transitScore": 30, "workHours": 40},
+    {"city": "Jacksonville", "country": "USA", "lat": 30.3322, "lng": -81.6557, "pop": 954614, "rent": 1450, "temp": 20.3, "sun": 218, "rain": 110, "snow": 5, "commute": 26, "weather": "Sunny", "baseIncome": 68000, "baseEmp": 60.0, "transitScore": 25, "workHours": 40},
+    {"city": "Seattle", "country": "USA", "lat": 47.6062, "lng": -122.3321, "pop": 733919, "rent": 2200, "temp": 11.4, "sun": 152, "rain": 150, "snow": 4, "commute": 32, "weather": "Rainy", "baseIncome": 115000, "baseEmp": 68.0, "transitScore": 85, "workHours": 42},
+    {"city": "Denver", "country": "USA", "lat": 39.7392, "lng": -104.9903, "pop": 711463, "rent": 1800, "temp": 10.1, "sun": 245, "rain": 84, "snow": 34, "commute": 28, "weather": "Snowy", "baseIncome": 85000, "baseEmp": 67.0, "transitScore": 60, "workHours": 41},
+    {"city": "Washington, D.C.", "country": "USA", "lat": 38.9072, "lng": -77.0369, "pop": 670050, "rent": 2400, "temp": 14.6, "sun": 203, "rain": 115, "snow": 5, "commute": 35, "weather": "Varied", "baseIncome": 101000, "baseEmp": 66.0, "transitScore": 90, "workHours": 43},
+    {"city": "Boston", "country": "USA", "lat": 42.3601, "lng": -71.0589, "pop": 654776, "rent": 2600, "temp": 10.8, "sun": 200, "rain": 120, "snow": 22, "commute": 32, "weather": "Varied", "baseIncome": 90000, "baseEmp": 65.0, "transitScore": 85, "workHours": 42},
+    {"city": "Nashville", "country": "USA", "lat": 36.1627, "lng": -86.7816, "pop": 692587, "rent": 1700, "temp": 15.3, "sun": 205, "rain": 120, "snow": 3, "commute": 29, "weather": "Humid", "baseIncome": 70000, "baseEmp": 64.0, "transitScore": 30, "workHours": 42},
+    {"city": "Las Vegas", "country": "USA", "lat": 36.1699, "lng": -115.1398, "pop": 646790, "rent": 1400, "temp": 20.3, "sun": 310, "rain": 26, "snow": 0, "commute": 26, "weather": "Sunny", "baseIncome": 66000, "baseEmp": 59.0, "transitScore": 40, "workHours": 40},
+    {"city": "Portland", "country": "USA", "lat": 45.5152, "lng": -122.6784, "pop": 641162, "rent": 1600, "temp": 12.4, "sun": 144, "rain": 164, "snow": 4, "commute": 27, "weather": "Rainy", "baseIncome": 80000, "baseEmp": 63.0, "transitScore": 70, "workHours": 39},
+    {"city": "Oklahoma City", "country": "USA", "lat": 35.4676, "lng": -97.5164, "pop": 687725, "rent": 1100, "temp": 16.1, "sun": 235, "rain": 83, "snow": 5, "commute": 24, "weather": "Sunny", "baseIncome": 60000, "baseEmp": 61.0, "transitScore": 20, "workHours": 41},
+    {"city": "El Paso", "country": "USA", "lat": 31.7619, "lng": -106.4850, "pop": 678058, "rent": 1000, "temp": 18.1, "sun": 293, "rain": 45, "snow": 1, "commute": 23, "weather": "Hot", "baseIncome": 59000, "baseEmp": 55.0, "transitScore": 20, "workHours": 40},
+    {"city": "Indianapolis", "country": "USA", "lat": 39.7684, "lng": -86.1581, "pop": 882039, "rent": 1200, "temp": 11.3, "sun": 187, "rain": 129, "snow": 20, "commute": 26, "weather": "Varied", "baseIncome": 65000, "baseEmp": 62.0, "transitScore": 30, "workHours": 40},
+    {"city": "Fort Worth", "country": "USA", "lat": 32.7555, "lng": -97.3308, "pop": 935508, "rent": 1350, "temp": 19.0, "sun": 229, "rain": 80, "snow": 1, "commute": 29, "weather": "Hot", "baseIncome": 75000, "baseEmp": 64.0, "transitScore": 25, "workHours": 42}
 ];
 
 const NAT_AVGS = {"Canada": {"inc": 43328.26, "rate": 80.76}, "USA": {"inc": 72389.66, "rate": 74.21}};
@@ -575,6 +589,7 @@ const Sidebar = ({ profile, setView, filters, setFilters, mapColor, setMapColor,
             <div>
                 <div className="flex justify-between mb-2">
                     <label className="text-xs font-bold text-slate-400 uppercase">Employment Rate</label>
+                    {/* ADDED: > symbol in the label */}
                     <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{'>'} {filters.emp}%</span>
                 </div>
                 <input type="range" min="50" max="80" value={filters.emp} onChange={e => setFilters({...filters, emp: Number(e.target.value)})}
@@ -583,6 +598,7 @@ const Sidebar = ({ profile, setView, filters, setFilters, mapColor, setMapColor,
             <div>
                 <div className="flex justify-between mb-2">
                     <label className="text-xs font-bold text-slate-400 uppercase">Median Income</label>
+                    {/* ADDED: > symbol in the label and used formatCurrency */}
                     <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">{'>'} {formatCurrency(filters.income)}</span>
                 </div>
                 <input type="range" min="0" max="150000" step="5000" value={filters.income} onChange={e => setFilters({...filters, income: Number(e.target.value)})}
@@ -618,7 +634,6 @@ const Sidebar = ({ profile, setView, filters, setFilters, mapColor, setMapColor,
     </aside>
 );
 
-// --- MAIN APP COMPONENT ---
 export default function App() {
     const [view, setView] = useState('wizard');
     const [profile, setProfile] = useState(null);
@@ -629,6 +644,7 @@ export default function App() {
     const [mapColor, setMapColor] = useState('income');
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [showCalcInfo, setShowCalcInfo] = useState(false); // State for showing calculation info
+    const [showTransitInfo, setShowTransitInfo] = useState(false); // State for showing transit score info
 
     const [mounted, setMounted] = useState(false);
     useEffect(() => setMounted(true), []);
@@ -881,11 +897,11 @@ export default function App() {
                                         ))}
                                     </div>
 
-                                    {/* GRID LAYOUT FOR CHARTS: 3 COLUMNS */}
-                                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-12">
+                                    {/* GRID LAYOUT FOR CHARTS: 4 COLUMNS (2 Top, 2 Bottom) */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
 
-                                        {/* LEFT COLUMN (2/3 width -> 3/5 cols): Combined Financial Chart */}
-                                        <div className="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                                        {/* TOP LEFT: Financial Efficiency */}
+                                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                                             <div className="mb-6">
                                                 <div className="flex items-center justify-between">
                                                     <div>
@@ -905,7 +921,7 @@ export default function App() {
                                                 {showCalcInfo && (
                                                     <div className="mt-3 p-3 bg-blue-50 rounded-lg text-xs text-blue-800 border border-blue-100 animate-in fade-in zoom-in duration-200">
                                                         <strong>Affordability Index Calculation:</strong><br/>
-                                                        <code>(Projected Annual Income) / (Monthly Rent × 12)</code>
+                                                        <code>(Projected Annual Income) / (Annual Rent)</code>
                                                         <br/>A score of <strong>3.0+</strong> means rent is affordable (less than 33% of income).
                                                     </div>
                                                 )}
@@ -922,11 +938,11 @@ export default function App() {
                                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                                         <XAxis dataKey="city" tick={{fontSize: 12, fill: '#64748b'}} axisLine={false} tickLine={false} />
 
-                                                        {/* Left Y Axis: Income */}
-                                                        <YAxis yAxisId="left" tickFormatter={(val) => `$${val/1000}k`} axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#64748b'}} />
+                                                        {/* Left Y Axis: Income (Rounded K format ONLY for Chart) */}
+                                                        <YAxis yAxisId="left" tickFormatter={(val) => `$${Math.round(val/1000)}k`} axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#64748b'}} />
 
-                                                        {/* Right Y Axis: Affordability Index */}
-                                                        <YAxis yAxisId="right" orientation="right" domain={[0, 6]} axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#3b82f6'}} />
+                                                        {/* Right Y Axis: Affordability Index (Rounded 1 decimal) */}
+                                                        <YAxis yAxisId="right" orientation="right" domain={[0, 6]} tickFormatter={(val) => val.toFixed(1)} axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#3b82f6'}} />
 
                                                         <RechartsTooltip
                                                             cursor={{fill: '#f8fafc'}}
@@ -949,8 +965,8 @@ export default function App() {
                                             </div>
                                         </div>
 
-                                        {/* RIGHT COLUMN (1/3 width -> 2/5 cols): Weather Chart */}
-                                        <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                                        {/* TOP RIGHT: Weather Chart */}
+                                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                                             <div className="mb-6">
                                                 <h3 className="font-bold text-lg text-slate-800">Weather (Yearly)</h3>
                                                 <p className="text-xs text-slate-400">Seasonal Pattern: Winter → Summer → Winter</p>
@@ -958,7 +974,7 @@ export default function App() {
                                             <div className="h-72">
                                                 <ResponsiveContainer>
                                                     <BarChart data={weatherChartData} layout="vertical" stackOffset="expand">
-                                                        {/* UPDATED: Month labels on X-axis */}
+                                                        {/* Month labels on X-axis */}
                                                         <XAxis
                                                             type="number"
                                                             domain={[0, 1]}
@@ -985,6 +1001,82 @@ export default function App() {
                                                 </ResponsiveContainer>
                                             </div>
                                         </div>
+
+                                        {/* BOTTOM LEFT: Transit Score */}
+                                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                                            <div className="mb-6 flex items-center justify-between">
+                                                <div className="flex items-center">
+                                                    <div className="bg-blue-50 p-2 rounded-lg mr-3 text-blue-600">
+                                                        <Bus size={20} />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-bold text-lg text-slate-800">Transit Score</h3>
+                                                        <p className="text-xs text-slate-400">Public transport accessibility (0-100)</p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => setShowTransitInfo(!showTransitInfo)}
+                                                    className="text-slate-400 hover:text-blue-500 transition"
+                                                    title="What does this score mean?"
+                                                >
+                                                    <Info size={18} />
+                                                </button>
+                                            </div>
+
+                                            {/* Transit Info Toggle */}
+                                            {showTransitInfo && (
+                                                <div className="mb-4 p-3 bg-blue-50 rounded-lg text-xs text-blue-800 border border-blue-100 animate-in fade-in zoom-in duration-200">
+                                                    <strong>Transit Score Definition:</strong><br/>
+                                                    A measure of how well a location is served by public transit.<br/>
+                                                    • <strong>90-100:</strong> Rider's Paradise (World-class transit)<br/>
+                                                    • <strong>70-89:</strong> Excellent Transit (Convenient for most trips)<br/>
+                                                    • <strong>50-69:</strong> Good Transit (Many nearby options)<br/>
+                                                    • <strong>0-49:</strong> Minimal Transit (Car required)
+                                                </div>
+                                            )}
+
+                                            <div className="h-64">
+                                                <ResponsiveContainer>
+                                                    <BarChart data={data.filter(c => selectedCities.includes(c.city))}>
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                        <XAxis dataKey="city" tick={{fontSize: 12, fill: '#64748b'}} axisLine={false} tickLine={false} />
+                                                        <YAxis domain={[0, 100]} tick={{fontSize: 12, fill: '#64748b'}} axisLine={false} tickLine={false} />
+                                                        <RechartsTooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
+                                                        <Bar dataKey="transitScore" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={40} name="Score" />
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                        </div>
+
+                                        {/* BOTTOM RIGHT: Work Hours Distribution - UPDATED TO HORIZONTAL BAR CHART */}
+                                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                                            <div className="mb-6 flex items-center">
+                                                <div className="bg-orange-50 p-2 rounded-lg mr-3 text-orange-600">
+                                                    <Clock size={20} />
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-bold text-lg text-slate-800">Avg. Weekly Hours</h3>
+                                                    <p className="text-xs text-slate-400">Standard 40h week comparison</p>
+                                                </div>
+                                            </div>
+                                            <div className="h-64">
+                                                <ResponsiveContainer>
+                                                    {/* Switched to horizontal layout for better readability */}
+                                                    <BarChart layout="vertical" data={data.filter(c => selectedCities.includes(c.city))}>
+                                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                                                        <XAxis type="number" domain={[30, 50]} tick={{fontSize: 12, fill: '#64748b'}} axisLine={false} tickLine={false} />
+                                                        <YAxis dataKey="city" type="category" width={80} tick={{fontSize: 11}} axisLine={false} tickLine={false} />
+                                                        <RechartsTooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
+
+                                                        {/* Reference Line for 40h Standard */}
+                                                        <ReferenceLine x={40} stroke="red" strokeDasharray="3 3" label={{ position: 'top', value: '40h', fill: 'red', fontSize: 10 }} />
+
+                                                        <Bar dataKey="workHours" fill="#f97316" radius={[0, 4, 4, 0]} barSize={20} name="Hours/Week" />
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                        </div>
+
                                     </div>
                                 </>
                             )}
