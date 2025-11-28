@@ -590,7 +590,7 @@ const Sidebar = ({ profile, setView, filters, setFilters, mapColor, setMapColor,
                     {/* ADDED: > symbol in the label */}
                     <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{'>'} {filters.emp}%</span>
                 </div>
-                <input type="range" min="50" max="80" value={filters.emp} onChange={e => setFilters({...filters, emp: Number(e.target.value)})}
+                <input type="range" min="50" max="95" value={filters.emp} onChange={e => setFilters({...filters, emp: Number(e.target.value)})}
                        className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600" />
             </div>
             <div>
@@ -907,7 +907,7 @@ export default function App() {
                                             <div className="mb-6">
                                                 <div className="flex items-center justify-between">
                                                     <div>
-                                                        <h3 className="font-bold text-lg text-slate-800">Financial Efficiency</h3>
+                                                        <h3 className="font-bold text-lg text-slate-800">Where Your Income Goes Further</h3>
                                                         <p className="text-xs text-slate-400">Comparing Income (Bars) vs. Affordability Index (Line)</p>
                                                     </div>
                                                     <button
