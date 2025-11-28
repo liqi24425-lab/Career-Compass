@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, Legend, ComposedChart, Area } from 'recharts';
 import { DollarSign, TrendingUp, ArrowLeft, X, Edit2, Map as MapIcon, BarChart2, Home, Save, AlertTriangle, Loader2, Info } from 'lucide-react';
 import {GRANULAR_LOOKUP} from "./all_data.js"
+
 // --- CONFIGURATION ---
 const GOOGLE_MAPS_API_KEY = "AIzaSyAqw54yCjz_N5g2_Gcu6WhhWG0V4umsrOE";
 
@@ -58,8 +59,8 @@ const BENCHMARK_LOOKUP = {"Canada": {"Age_Bin": {"18-24": [20000, 78.9], "25-35"
 console.log(GRANULAR_LOOKUP);
 
 // --- HELPER FUNCTIONS ---
-// UPDATED: Round numbers in display (k format), but underlying numbers stay precise
-const formatCurrency = (val) => `$${Math.round(val/1000)}k`;
+// REVERTED: Use full numbers (e.g. $10,000) for general display as requested
+const formatCurrency = (val) => `$${Math.round(val).toLocaleString()}`;
 
 const calculateMetrics = (profile) => {
     if (!profile) return [];
@@ -114,14 +115,14 @@ const calculateMetrics = (profile) => {
 
         return {
             ...city,
-            projectedIncome, // Kept precise
-            emp: projectedEmp, // Kept precise
-            affordIndex // Kept precise
+            projectedIncome, // Preserved precision
+            emp: projectedEmp, // Preserved precision
+            affordIndex // Preserved precision
         };
     });
 };
 
-// ... (MapLegend, StaticMap, GoogleMapComponent, Wizard, EditProfileModal, Sidebar are unchanged)
+// ... (MapLegend, StaticMap, GoogleMapComponent, Wizard, EditProfileModal are unchanged)
 
 // --- MAP LEGEND COMPONENT ---
 const MapLegend = ({ mapColor }) => {
@@ -573,16 +574,16 @@ const Sidebar = ({ profile, setView, filters, setFilters, mapColor, setMapColor,
         <div className="space-y-8">
             <div>
                 <div className="flex justify-between mb-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase">Min Employment</label>
-                    <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{filters.emp}%</span>
+                    <label className="text-xs font-bold text-slate-400 uppercase">Employment Rate</label>
+                    <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{'>'} {filters.emp}%</span>
                 </div>
                 <input type="range" min="50" max="80" value={filters.emp} onChange={e => setFilters({...filters, emp: Number(e.target.value)})}
                        className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600" />
             </div>
             <div>
                 <div className="flex justify-between mb-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase">Min Income</label>
-                    <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">{formatCurrency(filters.income)}</span>
+                    <label className="text-xs font-bold text-slate-400 uppercase">Median Income</label>
+                    <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">{'>'} {formatCurrency(filters.income)}</span>
                 </div>
                 <input type="range" min="0" max="150000" step="5000" value={filters.income} onChange={e => setFilters({...filters, income: Number(e.target.value)})}
                        className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-green-600" />
@@ -617,6 +618,7 @@ const Sidebar = ({ profile, setView, filters, setFilters, mapColor, setMapColor,
     </aside>
 );
 
+// --- MAIN APP COMPONENT ---
 export default function App() {
     const [view, setView] = useState('wizard');
     const [profile, setProfile] = useState(null);
@@ -864,7 +866,6 @@ export default function App() {
                                                 <div className="space-y-3">
                                                     <div className="flex justify-between items-center">
                                                         <span className="text-sm text-slate-500 font-medium">Projected Income</span>
-                                                        {/* UPDATED: Rounded Income Display */}
                                                         <span className="font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">{formatCurrency(city.projectedIncome)}</span>
                                                     </div>
                                                     <div className="flex justify-between items-center">
@@ -904,7 +905,7 @@ export default function App() {
                                                 {showCalcInfo && (
                                                     <div className="mt-3 p-3 bg-blue-50 rounded-lg text-xs text-blue-800 border border-blue-100 animate-in fade-in zoom-in duration-200">
                                                         <strong>Affordability Index Calculation:</strong><br/>
-                                                        <code>(Projected Annual Income) / (Annual Rent)</code>
+                                                        <code>(Projected Annual Income) / (Monthly Rent × 12)</code>
                                                         <br/>A score of <strong>3.0+</strong> means rent is affordable (less than 33% of income).
                                                     </div>
                                                 )}
@@ -921,11 +922,11 @@ export default function App() {
                                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                                         <XAxis dataKey="city" tick={{fontSize: 12, fill: '#64748b'}} axisLine={false} tickLine={false} />
 
-                                                        {/* Left Y Axis: Income (Rounded K format) */}
+                                                        {/* Left Y Axis: Income */}
                                                         <YAxis yAxisId="left" tickFormatter={(val) => `$${val/1000}k`} axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#64748b'}} />
 
-                                                        {/* Right Y Axis: Affordability Index (Rounded 1 decimal) */}
-                                                        <YAxis yAxisId="right" orientation="right" domain={[0, 6]} tickFormatter={(val) => val.toFixed(1)} axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#3b82f6'}} />
+                                                        {/* Right Y Axis: Affordability Index */}
+                                                        <YAxis yAxisId="right" orientation="right" domain={[0, 6]} axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#3b82f6'}} />
 
                                                         <RechartsTooltip
                                                             cursor={{fill: '#f8fafc'}}
