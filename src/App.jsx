@@ -1,16 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
-import { DollarSign, TrendingUp, ArrowLeft, X, Edit2, Map as MapIcon, BarChart2, Home, Save, AlertTriangle, Loader2 } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, Legend, ComposedChart, Area } from 'recharts';
+import { DollarSign, TrendingUp, ArrowLeft, X, Edit2, Map as MapIcon, BarChart2, Home, Save, AlertTriangle, Loader2, Info } from 'lucide-react';
 import {GRANULAR_LOOKUP} from "./all_data.js"
-
 // --- CONFIGURATION ---
-// ⚠️ Set to empty string "" to force the Static Map (Original colorful look).
-// Paste your key back if you want the interactive Google Map.
-const GOOGLE_MAPS_API_KEY = "";
+const GOOGLE_MAPS_API_KEY = "AIzaSyAqw54yCjz_N5g2_Gcu6WhhWG0V4umsrOE";
 
 // --- 1. DATASETS ---
-
-// A. CITY BASE DATA
 const CITY_DATA = [
     {"city": "Toronto", "country": "Canada", "lat": 43.6532, "lng": -79.3832, "pop": 6202225, "rent": 1800, "temp": 9.4, "sun": 305, "rain": 110, "snow": 40, "commute": 34, "weather": "Snowy", "baseIncome": 85000, "baseEmp": 61.5},
     {"city": "Vancouver", "country": "Canada", "lat": 49.2827, "lng": -123.1207, "pop": 2642825, "rent": 2100, "temp": 10.4, "sun": 289, "rain": 168, "snow": 9, "commute": 30, "weather": "Rainy", "baseIncome": 82000, "baseEmp": 62.0},
@@ -55,39 +50,16 @@ const CITY_DATA = [
     {"city": "Fort Worth", "country": "USA", "lat": 32.7555, "lng": -97.3308, "pop": 935508, "rent": 1350, "temp": 19.0, "sun": 229, "rain": 80, "snow": 1, "commute": 29, "weather": "Hot", "baseIncome": 75000, "baseEmp": 64.0}
 ];
 
-// B. NATIONAL AVERAGES
 const NAT_AVGS = {"Canada": {"inc": 43328.26, "rate": 80.76}, "USA": {"inc": 72389.66, "rate": 74.21}};
-
-// C. BENCHMARK LOOKUP
-const BENCHMARK_LOOKUP = {"Canada": {
-        "Age_Bin": {
-            "18-24": [20000, 78.9],
-            "25-35": [44000, 90.2],
-            "35-45": [57000, 92.2],
-            "45-55": [58000, 92.5],
-            "55+": [40000, 89.5]
-        },
-        "Edu_Bin": {
-            "College": [46000, 90.4],
-            "Graduate or Above": [69000, 94.2],
-            "High School": [30000, 84.4],
-            "University": [56000, 92.5]
-        },
-        "Job_Bin": {
-            "Arts & Design": [52000, 94.1],
-            "Business & Office": [130000, 98.3],
-            "Other": [37000, 87.3],
-            "STEM & Technical": [80000, 95.5],
-            "Social Service": [67000, 95.8]
-        }
-    },
-    "USA": {"Age_Bin": {"18-24": [9500, 87.6], "25-35": [40000, 96.3], "35-45": [50000, 95.6], "45-55": [55000, 96.2], "55+": [29580, 95.7]}, "Edu_Bin": {"College": [40000, 96.3], "Graduate or Above": [84030, 97.4], "High School": [20000, 92.9], "University": [60000, 96.8]}, "Job_Bin": {"Arts & Design": [50000, 94.7], "Business & Office": [80000, 97.5], "Other": [22400, 92.8], "STEM & Technical": [92000, 98.5], "Social Service": [58000, 97.6]}}};
+const BENCHMARK_LOOKUP = {"Canada": {"Age_Bin": {"18-24": [20000, 78.9], "25-35": [44000, 90.2], "35-45": [57000, 92.2], "45-55": [58000, 92.5], "55+": [40000, 89.5]}, "Edu_Bin": {"College": [46000, 90.4], "Graduate or Above": [69000, 94.2], "High School": [30000, 84.4], "University": [56000, 92.5]}, "Job_Bin": {"Arts & Design": [52000, 94.1], "Business & Office": [130000, 98.3], "Other": [37000, 87.3], "STEM & Technical": [80000, 95.5], "Social Service": [67000, 95.8]}}, "USA": {"Age_Bin": {"18-24": [9500, 87.6], "25-35": [40000, 96.3], "35-45": [50000, 95.6], "45-55": [55000, 96.2], "55+": [29580, 95.7]}, "Edu_Bin": {"College": [40000, 96.3], "Graduate or Above": [84030, 97.4], "High School": [20000, 92.9], "University": [60000, 96.8]}, "Job_Bin": {"Arts & Design": [50000, 94.7], "Business & Office": [80000, 97.5], "Other": [22400, 92.8], "STEM & Technical": [92000, 98.5], "Social Service": [58000, 97.6]}}};
 
 // D. GRANULAR LOOKUP
-const GRANULAR_LOOKUP = {};
+// Empty placeholder to prevent errors
+console.log(GRANULAR_LOOKUP);
 
 // --- HELPER FUNCTIONS ---
-const formatCurrency = (val) => `$${Math.round(val).toLocaleString()}`;
+// UPDATED: Round numbers in display (k format), but underlying numbers stay precise
+const formatCurrency = (val) => `$${Math.round(val/1000)}k`;
 
 const calculateMetrics = (profile) => {
     if (!profile) return [];
@@ -103,8 +75,6 @@ const calculateMetrics = (profile) => {
         let projectedEmp = city.baseEmp;
 
         if (!isFallback) {
-            // 1. Try Specific Lookup
-            // FIX: Ensure key does NOT include gender so "Female" selection doesn't break lookup
             const key = `${city.city}|${profile.age}|${profile.edu}|${profile.job}`;
             const specificData = GRANULAR_LOOKUP[key];
 
@@ -112,7 +82,6 @@ const calculateMetrics = (profile) => {
                 projectedIncome = specificData[0];
                 projectedEmp = specificData[1];
             } else {
-                // 2. Benchmark Scaling Logic
                 const benchmarks = BENCHMARK_LOOKUP[city.country];
                 let benchInc = null;
                 let benchRate = null;
@@ -131,16 +100,10 @@ const calculateMetrics = (profile) => {
                 if (res) {
                     benchInc = res[0];
                     benchRate = res[1];
-
                     const natAvgInc = NAT_AVGS[city.country].inc;
                     const natAvgRate = NAT_AVGS[city.country].rate;
-
-                    if (benchInc) {
-                        projectedIncome = city.baseIncome * (benchInc / natAvgInc);
-                    }
-                    if (benchRate) {
-                        projectedEmp = Math.min(100, city.baseEmp + (benchRate - natAvgRate));
-                    }
+                    if (benchInc) projectedIncome = city.baseIncome * (benchInc / natAvgInc);
+                    if (benchRate) projectedEmp = Math.min(100, city.baseEmp + (benchRate - natAvgRate));
                 }
             }
         }
@@ -148,14 +111,17 @@ const calculateMetrics = (profile) => {
         if (projectedIncome < 12000 && projectedIncome > 0) projectedIncome *= 12;
 
         const affordIndex = projectedIncome / (city.rent * 12);
+
         return {
             ...city,
-            projectedIncome,
-            emp: projectedEmp,
-            affordIndex
+            projectedIncome, // Kept precise
+            emp: projectedEmp, // Kept precise
+            affordIndex // Kept precise
         };
     });
 };
+
+// ... (MapLegend, StaticMap, GoogleMapComponent, Wizard, EditProfileModal, Sidebar are unchanged)
 
 // --- MAP LEGEND COMPONENT ---
 const MapLegend = ({ mapColor }) => {
@@ -651,7 +617,6 @@ const Sidebar = ({ profile, setView, filters, setFilters, mapColor, setMapColor,
     </aside>
 );
 
-// --- MAIN APP COMPONENT ---
 export default function App() {
     const [view, setView] = useState('wizard');
     const [profile, setProfile] = useState(null);
@@ -661,6 +626,7 @@ export default function App() {
     const [filters, setFilters] = useState({ emp: 50, income: 0 }); // Default income filter 0 to avoid disappearing cities
     const [mapColor, setMapColor] = useState('income');
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [showCalcInfo, setShowCalcInfo] = useState(false); // State for showing calculation info
 
     const [mounted, setMounted] = useState(false);
     useEffect(() => setMounted(true), []);
@@ -898,6 +864,7 @@ export default function App() {
                                                 <div className="space-y-3">
                                                     <div className="flex justify-between items-center">
                                                         <span className="text-sm text-slate-500 font-medium">Projected Income</span>
+                                                        {/* UPDATED: Rounded Income Display */}
                                                         <span className="font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">{formatCurrency(city.projectedIncome)}</span>
                                                     </div>
                                                     <div className="flex justify-between items-center">
@@ -913,78 +880,107 @@ export default function App() {
                                         ))}
                                     </div>
 
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
-                                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                                    {/* GRID LAYOUT FOR CHARTS: 3 COLUMNS */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-12">
+
+                                        {/* LEFT COLUMN (2/3 width -> 3/5 cols): Combined Financial Chart */}
+                                        <div className="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                                             <div className="mb-6">
-                                                <h3 className="font-bold text-lg text-slate-800">Affordability Index</h3>
-                                                <p className="text-xs text-slate-400">Income vs. Annual Rent (Higher is better)</p>
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <h3 className="font-bold text-lg text-slate-800">Financial Efficiency</h3>
+                                                        <p className="text-xs text-slate-400">Comparing Income (Bars) vs. Affordability Index (Line)</p>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => setShowCalcInfo(!showCalcInfo)}
+                                                        className="text-slate-400 hover:text-blue-500 transition"
+                                                        title="How is this calculated?"
+                                                    >
+                                                        <Info size={18} />
+                                                    </button>
+                                                </div>
+
+                                                {/* Calculation Info Toggle */}
+                                                {showCalcInfo && (
+                                                    <div className="mt-3 p-3 bg-blue-50 rounded-lg text-xs text-blue-800 border border-blue-100 animate-in fade-in zoom-in duration-200">
+                                                        <strong>Affordability Index Calculation:</strong><br/>
+                                                        <code>(Projected Annual Income) / (Annual Rent)</code>
+                                                        <br/>A score of <strong>3.0+</strong> means rent is affordable (less than 33% of income).
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="h-72">
                                                 <ResponsiveContainer>
-                                                    <BarChart data={data.filter(c => selectedCities.includes(c.city))}>
-                                                        <XAxis dataKey="city" tick={{fontSize: 12}} axisLine={false} tickLine={false} />
-                                                        <YAxis hide />
-                                                        <RechartsTooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-                                                        <Bar dataKey="affordIndex" fill="#3B82F6" radius={[6, 6, 0, 0]} barSize={60} />
-                                                    </BarChart>
+                                                    <ComposedChart data={data.filter(c => selectedCities.includes(c.city))}>
+                                                        <defs>
+                                                            <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
+                                                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
+                                                                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                                                            </linearGradient>
+                                                        </defs>
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                        <XAxis dataKey="city" tick={{fontSize: 12, fill: '#64748b'}} axisLine={false} tickLine={false} />
+
+                                                        {/* Left Y Axis: Income (Rounded K format) */}
+                                                        <YAxis yAxisId="left" tickFormatter={(val) => `$${val/1000}k`} axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#64748b'}} />
+
+                                                        {/* Right Y Axis: Affordability Index (Rounded 1 decimal) */}
+                                                        <YAxis yAxisId="right" orientation="right" domain={[0, 6]} tickFormatter={(val) => val.toFixed(1)} axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#3b82f6'}} />
+
+                                                        <RechartsTooltip
+                                                            cursor={{fill: '#f8fafc'}}
+                                                            contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                                                            formatter={(value, name) => {
+                                                                if (name === "Projected Income") return [`$${Math.round(value/1000)}k`, name];
+                                                                if (name === "Affordability Index") return [value.toFixed(1), name];
+                                                                return [value, name];
+                                                            }}
+                                                        />
+                                                        <Legend iconType="circle" wrapperStyle={{paddingTop: '10px'}} />
+
+                                                        {/* Bar: Projected Income */}
+                                                        <Bar yAxisId="left" dataKey="projectedIncome" name="Projected Income" fill="url(#colorIncome)" radius={[4, 4, 0, 0]} barSize={50} />
+
+                                                        {/* Line: Affordability Index */}
+                                                        <Line yAxisId="right" type="monotone" dataKey="affordIndex" name="Affordability Index" stroke="#3b82f6" strokeWidth={3} dot={{r: 5, strokeWidth: 2, fill: 'white'}} activeDot={{r: 7}} />
+                                                    </ComposedChart>
                                                 </ResponsiveContainer>
                                             </div>
                                         </div>
 
-                                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                                        {/* RIGHT COLUMN (1/3 width -> 2/5 cols): Weather Chart */}
+                                        <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                                             <div className="mb-6">
-                                                <h3 className="font-bold text-lg text-slate-800">Weather Distribution (Jan - Dec)</h3>
-                                                <p className="text-xs text-slate-400">Estimated seasonal pattern: Winter → Summer → Winter</p>
+                                                <h3 className="font-bold text-lg text-slate-800">Weather (Yearly)</h3>
+                                                <p className="text-xs text-slate-400">Seasonal Pattern: Winter → Summer → Winter</p>
                                             </div>
                                             <div className="h-72">
                                                 <ResponsiveContainer>
-                                                    {/* Using the new weatherChartData for seasonal split */}
                                                     <BarChart data={weatherChartData} layout="vertical" stackOffset="expand">
-                                                        <XAxis type="number" domain={[0, 1]} ticks={[0, 1/11, 2/11, 3/11, 4/11, 5/11, 6/11, 7/11, 8/11, 9/11, 10/11, 1]} tickFormatter={(val) => { const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]; const index = Math.round(val * 11); return months[index] || ""; }} axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} interval={0}/>
-                                                        <YAxis dataKey="city" type="category" width={100} tick={{fontSize: 12}} axisLine={false} tickLine={false} />
+                                                        {/* UPDATED: Month labels on X-axis */}
+                                                        <XAxis
+                                                            type="number"
+                                                            domain={[0, 1]}
+                                                            ticks={[0, 1/11, 2/11, 3/11, 4/11, 5/11, 6/11, 7/11, 8/11, 9/11, 10/11, 1]}
+                                                            tickFormatter={(val) => {
+                                                                const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                                                                const index = Math.round(val * 11);
+                                                                return months[index] || "";
+                                                            }}
+                                                            axisLine={false}
+                                                            tickLine={false}
+                                                            tick={{fontSize: 10, fill: '#94a3b8'}}
+                                                            interval={0}
+                                                        />
+                                                        <YAxis dataKey="city" type="category" width={80} tick={{fontSize: 11}} axisLine={false} tickLine={false} />
                                                         <RechartsTooltip cursor={{fill: 'transparent'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
 
-                                                        {/* Jan-Mar (Snow or Rain) */}
-                                                        <Bar dataKey="part1" stackId="a" fill="#94A3B8" radius={[6, 0, 0, 6]} name="Winter Start" />
-
-                                                        {/* Apr-May (Rain) */}
-                                                        <Bar dataKey="part2" stackId="a" fill="#60A5FA" name="Spring Rain" />
-
-                                                        {/* Jun-Sep (Sun) */}
-                                                        <Bar dataKey="part3" stackId="a" fill="#FCD34D" name="Summer Sun" />
-
-                                                        {/* Oct-Nov (Rain) */}
-                                                        <Bar dataKey="part4" stackId="a" fill="#60A5FA" name="Autumn Rain" />
-
-                                                        {/* Dec (Snow or Rain) */}
-                                                        <Bar dataKey="part5" stackId="a" fill="#94A3B8" radius={[0, 6, 6, 0]} name="Winter End" />
+                                                        <Bar dataKey="part1" stackId="a" fill="#e2e8f0" radius={[6, 0, 0, 6]} name="Winter" />
+                                                        <Bar dataKey="part2" stackId="a" fill="#93c5fd" name="Spring" />
+                                                        <Bar dataKey="part3" stackId="a" fill="#fde047" name="Summer" />
+                                                        <Bar dataKey="part4" stackId="a" fill="#fdba74" name="Autumn" />
+                                                        <Bar dataKey="part5" stackId="a" fill="#e2e8f0" radius={[0, 6, 6, 0]} name="Winter" />
                                                     </BarChart>
-                                                </ResponsiveContainer>
-                                            </div>
-                                        </div>
-
-                                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-2">
-                                            <div className="mb-6">
-                                                <h3 className="font-bold text-lg text-slate-800">Projected Income Growth</h3>
-                                                <p className="text-xs text-slate-400">Estimated salary trajectory over 25 years</p>
-                                            </div>
-                                            <div className="h-80">
-                                                <ResponsiveContainer>
-                                                    <LineChart>
-                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                                        <XAxis dataKey="year" type="number" domain={[0, 25]} tickFormatter={v => `Year ${v}`} axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} />
-                                                        <YAxis tickFormatter={val => `$${val/1000}k`} axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} />
-                                                        <RechartsTooltip formatter={(val) => formatCurrency(val)} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}} />
-                                                        <Legend iconType="circle" wrapperStyle={{paddingTop: '20px'}} />
-                                                        {data.filter(c => selectedCities.includes(c.city)).map((city, i) => {
-                                                            const growthRate = ['San Francisco', 'New York', 'Toronto', 'Austin'].some(n => city.city.includes(n)) ? 1.05 : 1.03;
-                                                            const chartData = [0, 5, 10, 15, 20, 25].map(y => ({ year: y, income: city.projectedIncome * Math.pow(growthRate, y/5) }));
-                                                            const colors = ['#3B82F6', '#10B981', '#F59E0B'];
-                                                            return (
-                                                                <Line key={city.city} data={chartData} type="monotone" dataKey="income" name={city.city} stroke={colors[i % 3]} strokeWidth={3} dot={{r: 4, strokeWidth: 0}} activeDot={{r: 6}} />
-                                                            )
-                                                        })}
-                                                    </LineChart>
                                                 </ResponsiveContainer>
                                             </div>
                                         </div>
