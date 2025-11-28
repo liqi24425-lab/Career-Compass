@@ -586,7 +586,7 @@ const Sidebar = ({ profile, setView, filters, setFilters, mapColor, setMapColor,
         <div className="space-y-8">
             <div>
                 <div className="flex justify-between mb-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase">Min Employment</label>
+                    <label className="text-xs font-bold text-slate-400 uppercase">Employment Rate</label>
                     {/* ADDED: > symbol in the label */}
                     <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{'>'} {filters.emp}%</span>
                 </div>
@@ -595,7 +595,7 @@ const Sidebar = ({ profile, setView, filters, setFilters, mapColor, setMapColor,
             </div>
             <div>
                 <div className="flex justify-between mb-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase">Min Income</label>
+                    <label className="text-xs font-bold text-slate-400 uppercase">Median Income</label>
                     {/* ADDED: > symbol in the label and used formatCurrency */}
                     <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">{'>'} {formatCurrency(filters.income)}</span>
                 </div>
